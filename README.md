@@ -1,220 +1,241 @@
-# CDC Export System
+# E-Commerce Query Chatbot
 
-A containerized Change Data Capture (CDC) data export system using Node.js, Express, and PostgreSQL.
-
----
-
-## Prerequisites
-
-- Docker Desktop installed and running
-- Git Bash or any terminal
+An AI-powered **E-Commerce Query Chatbot** built using **LangGraph, LangChain, Groq LLM, SQLite, and SQLAlchemy**. The chatbot handles customer support tasks such as **order tracking, product queries, returns/refunds, and personalized recommendations** through a modular multi-agent workflow.
 
 ---
 
-## Setup & Run
+## Features
 
-### Step 1 — Clone the repo
+* 🚚 **Order Status Tracking**
 
-```bash
-git clone https://github.com/srujanaA02/ecommerce-chatbot
-cd cdc-export-system
-```
+  * Track customer orders
+  * Show shipping and delivery status
+  * Handle multiple order clarification
 
-### Step 2 — Copy environment file
+* 🛍️ **Product Query Handling**
 
-```bash
-cp .env.example .env
-```
+  * Check product availability
+  * View product price and ratings
+  * Suggest alternatives for out-of-stock items
 
-### Step 3 — Start all services
+* ↩️ **Returns & Refund Support**
 
-```bash
-docker-compose up --build
-```
+  * Check refund status
+  * Handle return requests
+  * Validate return eligibility
 
-Wait until you see this line in the logs:
-```
-app-1 | {"level":"info","event":"server_started","port":"8080"}
-```
+* ⭐ **Product Recommendations**
 
-### Step 4 — Confirm it is running (open a second terminal)
+  * Personalized suggestions
+  * Budget-based recommendations
+  * Category-based filtering
 
-```bash
-curl http://localhost:8080/health
-```
+* 🧠 **AI Agent Workflow**
 
-Expected:
-```json
-{"status":"ok","timestamp":"2026-05-29T07:00:00.000Z"}
-```
+  * Multi-agent architecture using LangGraph
+  * Intent classification-based routing
+  * Follow-up conversational memory
 
----
+* 📊 **Observability & Evaluation**
 
-## Verify Database Seeding
-
-```bash
-# Total users (must be >= 100,000)
-docker-compose exec db psql -U user -d mydatabase -c "SELECT COUNT(*) FROM users;"
-
-# Soft-deleted users (must be >= 1,000)
-docker-compose exec db psql -U user -d mydatabase -c "SELECT COUNT(*) FROM users WHERE is_deleted = TRUE;"
-
-# Date range (must span 7+ days)
-docker-compose exec db psql -U user -d mydatabase -c "SELECT MIN(updated_at), MAX(updated_at) FROM users;"
-```
+  * LangSmith tracing support
+  * Evaluation dataset for intent accuracy
 
 ---
 
-## API Commands
+## Tech Stack
 
-### Full Export
+### Languages & Frameworks
 
-```bash
-curl -X POST http://localhost:8080/exports/full \
-  -H "X-Consumer-ID: consumer-1"
-```
+* Python
+* LangChain
+* LangGraph
 
-Wait 25 seconds then check the file:
-```bash
-ls output/
-```
+### Database
 
-### Check Watermark
+* SQLite
+* SQLAlchemy
 
-```bash
-curl http://localhost:8080/exports/watermark \
-  -H "X-Consumer-ID: consumer-1"
-```
+### AI / LLM
 
-### Incremental Export
+* Groq API (`llama-3.1-8b-instant`)
 
-First simulate some changes in the DB:
-```bash
-docker-compose exec db psql -U user -d mydatabase \
-  -c "UPDATE users SET updated_at = NOW() WHERE id IN (1,2,3);"
-```
+### Other Tools
 
-Then run incremental export:
-```bash
-curl -X POST http://localhost:8080/exports/incremental \
-  -H "X-Consumer-ID: consumer-1"
-```
-
-Wait 5 seconds then check file:
-```bash
-ls output/
-```
-
-### Delta Export
-
-First simulate INSERT, UPDATE, and DELETE:
-```bash
-# INSERT
-docker-compose exec db psql -U user -d mydatabase \
-  -c "INSERT INTO users (name, email, created_at, updated_at) VALUES ('New User', 'new@test.com', NOW(), NOW());"
-
-# UPDATE
-docker-compose exec db psql -U user -d mydatabase \
-  -c "UPDATE users SET updated_at = NOW() WHERE id = 50;"
-
-# DELETE (soft delete)
-docker-compose exec db psql -U user -d mydatabase \
-  -c "UPDATE users SET is_deleted = TRUE, updated_at = NOW() WHERE id = 60;"
-```
-
-Then run delta export:
-```bash
-curl -X POST http://localhost:8080/exports/delta \
-  -H "X-Consumer-ID: consumer-3"
-```
-
-Wait 5 seconds then check file:
-```bash
-ls output/
-head -5 output/delta_consumer-3_*.csv
-```
-
-### 404 for unknown consumer
-
-```bash
-curl http://localhost:8080/exports/watermark \
-  -H "X-Consumer-ID: brand-new-consumer"
-```
-
----
-
-## Run Tests
-
-```bash
-docker-compose exec app npm test
-```
-
-Expected result: all tests pass with 70%+ line coverage.
-
----
-
-## View Logs
-
-```bash
-docker-compose logs app | grep '"event"'
-```
-
-You should see `export_started` and `export_completed` lines for every job.
-
----
-
-## Stop Everything
-
-```bash
-docker-compose down
-```
-
----
-
-## Environment Variables
-
-| Variable | Description | Value |
-|----------|-------------|-------|
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql://user:password@db:5432/mydatabase` |
-| `PORT` | App port | `8080` |
-| `NODE_ENV` | Environment | `development` |
+* Faker
+* LangSmith
+* python-dotenv
 
 ---
 
 ## Project Structure
 
-```
-cdc-export-system/
-├── docker-compose.yml
-├── Dockerfile
-├── .env.example
-├── package.json
-├── src/
-│   ├── index.js
-│   ├── db.js
-│   ├── logger.js
-│   ├── routes/
-│   │   ├── health.js
-│   │   └── exports.js
-│   └── services/
-│       ├── exportService.js
-│       └── watermarkService.js
-├── seeds/
-│   └── 01_init.sql
-├── tests/
-│   ├── unit/exportService.test.js
-│   └── integration/api.test.js
-└── output/
+```bash
+ecommerce-chatbot/
+│── agent/
+│   ├── __init__.py
+│   ├── db_tool.py
+│   ├── graph.py
+│   ├── state.py
+│   └── nodes/
+│       ├── fallback.py
+│       ├── greeting.py
+│       ├── intent_classifier.py
+│       ├── order_status.py
+│       ├── product_query.py
+│       ├── recommendation.py
+│       └── returns.py
+│
+│── evals/
+│   ├── dataset.json
+│   └── run_evals.py
+│
+│── main.py
+│── seed_db.py
+│── requirements.txt
+│── .env
+│── ecommerce.db
+│── README.md
 ```
 
 ---
 
-## API Summary
+## Installation
 
-| Method | Endpoint | Header | Description |
-|--------|----------|--------|-------------|
-| GET | `/health` | — | Health check |
-| POST | `/exports/full` | `X-Consumer-ID` | Export all non-deleted users |
-| POST | `/exports/incremental` | `X-Consumer-ID` | Export only changed rows since last watermark |
-| POST | `/exports/delta` | `X-Consumer-ID` | Same as incremental + operation column (INSERT/UPDATE/DELETE) |
-| GET | `/exports/watermark` | `X-Consumer-ID` | Get last exported timestamp for a consumer |
+### 1. Clone the Repository
+
+```bash
+git clone <your-repo-url>
+cd ecommerce-chatbot
+```
+
+### 2. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Configure Environment Variables
+
+Create a `.env` file:
+
+```env
+GROQ_API_KEY=your_groq_api_key_here
+LANGCHAIN_API_KEY=your_langsmith_api_key_here
+LANGCHAIN_TRACING_V2=true
+LANGCHAIN_PROJECT=ecommerce-chatbot
+LANGCHAIN_ENDPOINT=https://api.smith.langchain.com
+```
+
+---
+
+## Running the Project
+
+### Step 1: Seed the Database
+
+Generate sample customers, products, orders, and returns:
+
+```bash
+python seed_db.py
+```
+
+### Step 2: Run the Chatbot
+
+```bash
+python main.py
+```
+
+Example queries:
+
+```text
+Where is my order?
+Can I return my product?
+Recommend products under 1000
+Is the laptop in stock?
+```
+
+### Step 3: Run Evaluations
+
+```bash
+python evals/run_evals.py
+```
+
+---
+
+## LangGraph Workflow
+
+The chatbot follows a **state-machine architecture**:
+
+```text
+User Input
+      ↓
+Intent Classifier
+      ↓
+ ┌───────────────┬──────────────┬─────────────┐
+ ↓               ↓              ↓             ↓
+Order Status  Product Query   Returns   Recommendation
+      ↓
+Fallback / Escalation (if needed)
+```
+
+The chatbot maintains **follow-up context** to support multi-turn conversations.
+
+Example:
+
+```text
+User: Where is my order?
+Bot: Which order do you mean?
+
+User: O0001
+Bot: Your order is shipped.
+
+User: Can I return it?
+Bot: Yes, your order is eligible for return.
+```
+
+---
+
+## Evaluation
+
+The chatbot uses an evaluation dataset to test intent classification accuracy.
+
+Covered intents:
+
+* Order Status
+* Product Query
+* Returns
+* Recommendation
+* Greeting
+* Fallback
+
+Run evaluation:
+
+```bash
+python evals/run_evals.py
+```
+
+---
+
+## Challenges Faced
+
+* Managing follow-up conversational context
+* Intent routing inconsistencies
+* Prompt tuning for reliable classification
+* Multi-turn state management
+* Debugging with LangSmith traces
+
+---
+
+## Future Improvements
+
+* Add payment/order cancellation support
+* Improve recommendation quality
+* Add authentication system
+* Deploy as a web application
+* Add vector search for products
+
+---
+
+
+
+Just copy this into **README.md** in VS Code and push to GitHub. It looks professional for internship/project submissions.
