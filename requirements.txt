@@ -1,0 +1,7 @@
+faker
+sqlalchemy
+langchain
+langchain-groq
+langgraph
+langsmith
+python-dotenv
